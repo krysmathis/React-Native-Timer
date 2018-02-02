@@ -82,8 +82,6 @@ export default class App extends Component {
   }
   
   
-    
-  
   // Send data up to the database
   handlePost(name, time) {
     const ref = database.ref('/timer/');
@@ -101,7 +99,7 @@ export default class App extends Component {
 
   // for the renderer to render a timer for each of the storedTimers
   generateTimers() {
-        return <TimerList timers={this.state.storedTimers} post={this.handlePost} delete={this.handleDelete}/>
+        return <TimerList timers={this.state.storedTimers} delete={this.handleDelete}/>
   }
 
   // tied to the name input

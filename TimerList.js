@@ -14,35 +14,20 @@ import {
 /*
     The TimerList component generates the TimerListItems
 */
-class TimerList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            value: null
-        }
-    }
-    
+function TimerList (props) {
 
-    showTimers = () => {
-        const timers= this.props.timers;
+        const timers= props.timers;
         if (timers.length > 0){
             const listTimers = timers.map((timer, index) => 
-                <View className="lemon" key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={this.props.delete} /></View>
+                <View key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={props.delete} /></View>
             );
             return (listTimers);
         } else {
             return null;
         }
-    }
-
-
-    render() {
-        return (
-                this.showTimers()
-        );
-    }
-    
 }
+
+
 
 export default TimerList;
 
