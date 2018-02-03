@@ -1,5 +1,4 @@
 import React from 'react';
-import {CollectionItem, Icon} from 'react-materialize'
 import say from './speech';
 import {
     Platform,
@@ -8,7 +7,11 @@ import {
     View,
     Button,
     FlatList,
-    SectionList
+    SectionList,
+    ActivityIndicator,
+    Vibration,
+    StatusBar,
+    Alert
   } from 'react-native';
 
 /*
@@ -16,18 +19,34 @@ import {
 */
 function TimerList (props) {
 
-        const timers= props.timers;
-        if (timers.length > 0){
-            const listTimers = timers.map((timer, index) => 
-                <View key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={props.delete} /></View>
-            );
-            return (listTimers);
-        } else {
-            return null;
-        }
+    FlatListItemSeparator = () => {
+        return (
+          <View
+            style={{
+              height: 1,
+              width: "100%",
+              backgroundColor: "#607D8B",
+            }}
+          />
+        );
+      }
+    
+    const timers = props.timers;
+    if (timers.length > 0){
+        // const listTimers = timers.map((timer, index) => 
+        //     <View key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={props.delete} /></View>
+        // );
+        return (
+            <FlatList
+                data = {timers}
+                ItemSeparatorComponent = {this.FlatListItemSeparator}
+                renderItem={({item}) =><TimerItem  name={item.name} limit={item.limit} id={item.key} delete={props.delete} update={props.update} key={item.id}/> }
+            />
+        );
+    } else {
+        return null;
+    }
 }
-
-
 
 export default TimerList;
 
@@ -58,17 +77,38 @@ class TimerItem extends React.Component {
     }
 
     handleDelete = () => {
-        console.log("deleting", this.props.id);
         this.props.delete(this.props.id);
+    }
+
+    makeUpdate = () => {
+        console.log(this.props);
+        
+        const obj = {
+            title: this.props.name,
+            time: this.props.limit,
+            id: this.props.id
+        }
+        
+        this.props.update(obj);
+        
     }
 
     // If the user does not click on the timer item, a timer will not render
     render() {
         return (
-            <View className="timerItem">
-                <Text onPress={this.toggleRun} title="Timer">Timer: {this.props.name} Length: {this.props.limit}s </Text>
-                {this.state.runTimer ? <Timer name={this.props.name} limit={this.props.limit}/> : null}
+            <View>
+            <View className="timerItem" style={styles.rowText}>
+            <View>
+                <Text style={styles.titleText} onPress={this.toggleRun} title="Timer">Timer: {this.props.name} Length: {this.props.limit} </Text>
+            </View>
+            <View style={styles.rowText}>
+                <Button className="udpateListing" title="Update" onPress={this.makeUpdate}><Text>Update</Text></Button>
                 <Button className="deleteListing" title="Delete" onPress={this.handleDelete}><Text>Delete</Text></Button>
+            </View>
+            </View>
+            <View>
+                {this.state.runTimer ? <Timer name={this.props.name} limit={this.props.limit}/> : null}
+            </View>
             </View>
         );
     }
@@ -109,6 +149,16 @@ class Timer extends React.Component {
         clearInterval(this.timerId);
     }
 
+    timesUp() {
+        Alert.alert(
+            'Finshed',
+            'Timer is Done',
+            [
+              {text: 'OK', onPress: () => console.log('Ask me later pressed')},
+            ],
+            { cancelable: false }
+          )
+    }
     // This function ensures the component knows when it has exceede the time limit
     isExpired = () => this.state.time >= this.props.limit ? true : false;
 
@@ -117,13 +167,53 @@ class Timer extends React.Component {
     displayTime = () => {
         if (this.isExpired() === true) {
             clearInterval(this.timerId);
+            Vibration.vibrate();
+            this.timesUp();
             return (<Text>Timer Expired</Text>);
         } else {
-            return <Text>Time remaining: {this.props.limit - this.state.time}</Text>
+            return <View style={styles.activity}>
+                    <Text>Time remaining: {this.props.limit - this.state.time}</Text>
+                    <ActivityIndicator size="small" color="black" />
+                </View>
         }
     }
 
     render() {
-        return(this.displayTime());
+        return(
+            <View style={styles.timer}>
+                {this.displayTime()}
+            </View>
+        );
     }
 }
+
+const styles = StyleSheet.create({
+    baseText: {
+      fontFamily: 'Cochin',
+    },
+    titleText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    rowText: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 50,
+        paddingLeft: 10
+      },
+    timer: {
+        display: 'flex',
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#BADA55'
+    },
+    activity: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    }
+});

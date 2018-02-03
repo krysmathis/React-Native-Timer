@@ -12,7 +12,7 @@ import {
   View,
   FormLabel, FormInput,
   Button, TextInput,
-  TouchableOpacity, Picker
+  TouchableOpacity, Picker, FlatList
 } from 'react-native';
 import TimerList from './TimerList.js';
 import * as firebase from "firebase";
@@ -49,7 +49,9 @@ export default class App extends Component {
       showForm: false,
       isLoading: true,
       title: "",
-      time: ""
+      time: "",
+      id: "",
+      updateMode: false
     }
     // handle the binding of the input forms 'this' is available
     this.handleNameChange = this.handleNameChange.bind(this);
@@ -68,7 +70,7 @@ export default class App extends Component {
         }
         // convert the object into an array of values
         let timers = Object.keys(data).map(key => {
-            data[key].id = key;
+            data[key].key = key;
             return data[key];
         });
         this.setState({
@@ -91,58 +93,96 @@ export default class App extends Component {
     })
   }
 
+  handlePut = () => {
+
+    let postData = {
+      name: this.state.title,
+      limit: this.state.time
+    }
+    
+    let updates = {};
+    updates['/timer/' + this.state.id] = postData;
+
+    firebase.database().ref().update(updates);
+    
+    this.setState({
+       updateMode: false
+    });
+  
+  }
     // Send data up to the database
   handleDelete(id) {
     const ref = database.ref('/timer/' + id);
     ref.remove();
   }
 
-  // for the renderer to render a timer for each of the storedTimers
-  generateTimers() {
-        return <TimerList timers={this.state.storedTimers} delete={this.handleDelete}/>
-  }
+  handleUpdate = (timerObj) => {
+    
+    this.setState({
+      updateMode: true,
+      title: timerObj.title,
+      time: timerObj.time,
+      id: timerObj.id
+    });
 
+  }
+  // for the renderer to render a timer for each of the storedTimers
+  
   // tied to the name input
   handleNameChange = (text) => {
     this.setState({title: text});
   }
-
+  
   // tied to the time input
   handleTimeChange = (text) => {
     this.setState({time: text});
   }
-
+  
   isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
   }
   // Preparing the data for the post request
   handleSubmit = () => {
-
-      if (this.state.title.length > 0 && this.isNumeric(this.state.time)) {
-          this.handlePost(this.state.title, this.state.time);
-          this.setState({
-            title: "",
-            time: ""
-          });
+    
+    if (this.state.title.length > 0 && this.isNumeric(this.state.time)) {
+      // handle post or update
+      if (this.state.updateMode === true) {
+         this.handlePut();
+      } else {
+         this.handlePost(this.state.title, this.state.time);
       }
-
+      
+      
+      this.setState({
+        title: "",
+        time: ""
+      });
+    }
+    
   }
-
-  /*
-     iOS uses TextInput fields to hold data input
-  */
-  displayForm() {
   
-
+  generateTimers() {
+    return <TimerList timers={this.state.storedTimers} delete={this.handleDelete} update={this.handleUpdate}/>
+  }
+  
+  displayForm() {
+    
+    
+    /*
+    iOS uses TextInput fields to hold data input
+    */
     return (
         <View>
-              <TextInput type="text" placeholder="Name" name="title" label="Timer Name" value={this.state.title} onChangeText={this.handleNameChange} />
-              <TextInput type="text" placeholder="Timing" name="time" label="Time Limit" value={this.state.time} onChangeText={this.handleTimeChange} />
-             
+          <View>
+            <View style={styles.row}>
+              <TextInput style={styles.nameInput} type="text" placeholder="Name" name="title" label="Timer Name" value={this.state.title} onChangeText={this.handleNameChange} />
+              <TextInput style={styles.input} type="text" placeholder="Timing" name="time" label="Time Limit" value={this.state.time} onChangeText={this.handleTimeChange} />
+            </View>
+          </View>
               <TouchableOpacity
-               style = {styles.submitButton}
-               onPress = {this.handleSubmit}>
-               <Text style = {styles.submitButtonText}> Submit </Text>
+                  style = {styles.submitButton}
+                  onPress = {this.handleSubmit}>
+               <Text style = {styles.submitButtonText}> Add New </Text>
               </TouchableOpacity>
               {/* <Button title="Click" floating large className='red' waves='light' icon='add' type="submit" onPress={this.handleSubmit} value="">Click</Button> */}
 
@@ -158,8 +198,8 @@ export default class App extends Component {
         <Text style={styles.welcome}>
           ReactTimer
         </Text>
-        {this.state.isLoading===true ? <Text>Loading...</Text> : this.generateTimers() }
         { this.displayForm() }
+        {this.state.isLoading===true ? <Text>Loading...</Text> : this.generateTimers() }
 
       </View>
     );
@@ -190,7 +230,8 @@ const styles = StyleSheet.create({
       margin: 15,
       height: 40,
       borderColor: '#7a42f4',
-      borderWidth: 1
+      borderBottomWidth: 2,
+      width: 125
   },
   submitButton: {
       backgroundColor: '#7a42f4',
@@ -200,5 +241,17 @@ const styles = StyleSheet.create({
   },
   submitButtonText:{
       color: 'white'
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  nameInput: {
+    margin: 15,
+      height: 40,
+      borderColor: '#7a42f4',
+      borderBottomWidth: 2,
+      width: 175
   }
 });
