@@ -146,13 +146,13 @@ export default class App extends Component {
   handleSubmit = () => {
     
     if (this.state.title.length > 0 && this.isNumeric(this.state.time)) {
-    `  // handle post or update
+    // handle post or update
       if (this.state.updateMode === true) {
          this.handlePut();
       } else {
          this.handlePost(this.state.title, this.state.time);
       }
-    `  
+    
       
       this.setState({
         title: "",
