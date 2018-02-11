@@ -91,7 +91,6 @@ class TimerItem extends React.Component {
     }
 
     makeUpdate = () => {
-        console.log(this.props);
         
         const obj = {
             title: this.props.name,
