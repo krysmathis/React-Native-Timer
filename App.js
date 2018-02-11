@@ -12,7 +12,8 @@ import {
   View,
   FormLabel, FormInput,
   Button, TextInput,
-  TouchableOpacity, Picker, FlatList
+  TouchableOpacity, Picker, FlatList,
+  NavigatorIOS
 } from 'react-native';
 import TimerList from './TimerList.js';
 import * as firebase from "firebase";
@@ -173,6 +174,7 @@ export default class App extends Component {
     */
     return (
         <View>
+            
           <View>
             <View style={styles.row}>
               <TextInput style={styles.nameInput} type="text" placeholder="Name" name="title" label="Timer Name" value={this.state.title} onChangeText={this.handleNameChange} />
@@ -194,12 +196,17 @@ export default class App extends Component {
   
   render() {
     return (
+     
       <View style={styles.container}>
-        <Text style={styles.welcome}>
-          ReactTimer
-        </Text>
+       <NavigatorIOS
+          style={styles.navigation}
+          initialRoute={{
+          title: 'My Timers',
+          component: TimerList,
+          }}/>
+        
         { this.displayForm() }
-        {this.state.isLoading===true ? <Text>Loading...</Text> : this.generateTimers() }
+        {this.state.isLoading === true ? <Text>Loading...</Text> : this.generateTimers() }
 
       </View>
     );
@@ -222,6 +229,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333333',
     marginBottom: 5,
+  },
+  navigation: {
+    flex: 2,
   },
   container: {
     paddingTop: 23
@@ -246,6 +256,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginTop: 50
   },
   nameInput: {
     margin: 15,

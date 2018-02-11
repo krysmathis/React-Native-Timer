@@ -1,5 +1,4 @@
 import React from 'react';
-import say from './speech';
 import {
     Platform,
     StyleSheet,
@@ -11,14 +10,20 @@ import {
     ActivityIndicator,
     Vibration,
     StatusBar,
-    Alert
+    Alert,
+    NavigatorIOS,
+    Image,
+    TouchableOpacity
   } from 'react-native';
 
 /*
     The TimerList component generates the TimerListItems
 */
-function TimerList (props) {
-
+class TimerList extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+    
     FlatListItemSeparator = () => {
         return (
           <View
@@ -31,21 +36,26 @@ function TimerList (props) {
         );
       }
     
-    const timers = props.timers;
-    if (timers.length > 0){
-        // const listTimers = timers.map((timer, index) => 
-        //     <View key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={props.delete} /></View>
-        // );
-        return (
-            <FlatList
-                data = {timers}
-                ItemSeparatorComponent = {this.FlatListItemSeparator}
-                renderItem={({item}) =><TimerItem  name={item.name} limit={item.limit} id={item.key} delete={props.delete} update={props.update} key={item.id}/> }
-            />
-        );
-    } else {
-        return null;
+    render() {
+        if (this.props.timers !== undefined){
+            // const listTimers = timers.map((timer, index) => 
+            //     <View key={timer.id}><TimerItem name={timer.name} limit={timer.limit} id={timer.id} delete={props.delete} /></View>
+            // );
+            return (
+                <View>
+                   
+                <FlatList
+                    data = {this.props.timers}
+                    ItemSeparatorComponent = {this.FlatListItemSeparator}
+                    renderItem={({item}) =><TimerItem  name={item.name} limit={item.limit} id={item.key} delete={this.props.delete} update={this.props.update} key={item.id}/> }
+                />
+                </View>
+            );
+        } else {
+            return null;
+        }
     }
+    
 }
 
 export default TimerList;
@@ -98,13 +108,23 @@ class TimerItem extends React.Component {
         return (
             <View>
             <View className="timerItem" style={styles.rowText}>
-            <View>
-                <Text style={styles.titleText} onPress={this.toggleRun} title="Timer">Timer: {this.props.name} Length: {this.props.limit} </Text>
-            </View>
-            <View style={styles.rowText}>
-                <Button className="udpateListing" title="Update" onPress={this.makeUpdate}><Text>Update</Text></Button>
-                <Button className="deleteListing" title="Delete" onPress={this.handleDelete}><Text>Delete</Text></Button>
-            </View>
+                <View>
+                    <Text style={styles.titleText} onPress={this.toggleRun} title="Timer">{this.props.name} - {this.props.limit}s </Text>
+                </View>
+                <View style={styles.actionItems}>
+                    <TouchableOpacity className="updateListing" onPress={this.makeUpdate} style={styles.updateBtn}>
+                    <Image
+                        style={styles.button}
+                        source={require('./Resources/ic_update.png')}
+                    />
+                    </TouchableOpacity>
+                    <TouchableOpacity className="deleteListing" onPress={this.handleDelete}>
+                    <Image
+                        style={styles.button}
+                        source={require('./Resources/ic_delete.png')}
+                    />
+                    </TouchableOpacity>
+                </View>
             </View>
             <View>
                 {this.state.runTimer ? <Timer name={this.props.name} limit={this.props.limit}/> : null}
@@ -147,6 +167,10 @@ class Timer extends React.Component {
     // When the component is removed from the DOM, clear the setInterval
     componentWillUnmount() {
         clearInterval(this.timerId);
+    }
+
+    playSound() {
+        var Sound = require('react-native-sound');
     }
 
     timesUp() {
@@ -195,6 +219,7 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
+
     rowText: {
         display: 'flex',
         flexDirection: 'row',
@@ -202,6 +227,19 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         height: 50,
         paddingLeft: 10
+      },
+      actionItems: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 50,
+        paddingLeft: 10,
+        paddingRight: 20
+
+      },
+      updateBtn: {
+        paddingRight: 10
       },
     timer: {
         display: 'flex',
@@ -215,5 +253,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between'
-    }
+    },
+    icon: {
+        width: "1em",
+        height: "1em",
+        
+      }
 });
