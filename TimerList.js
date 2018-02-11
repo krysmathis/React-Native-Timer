@@ -169,10 +169,6 @@ class Timer extends React.Component {
         clearInterval(this.timerId);
     }
 
-    playSound() {
-        var Sound = require('react-native-sound');
-    }
-
     timesUp() {
         Alert.alert(
             'Finshed',
