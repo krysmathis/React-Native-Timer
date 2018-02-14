@@ -13,11 +13,27 @@ import {
   FormLabel, FormInput,
   Button, TextInput,
   TouchableOpacity, Picker, FlatList,
-  NavigatorIOS
+  NavigatorIOS,
+  AsyncStorage
 } from 'react-native';
 import TimerList from './TimerList.js';
 import * as firebase from "firebase";
 
+
+// uuid Generatory
+const uuidGenerator = function* () {
+  while (true) {
+      let time = new Date().getTime()
+      let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (char) {
+          const random = (time + Math.random() * 16) % 16 | 0
+          return (char === 'x' ? random : (random & 0x3 | 0x8)).toString(16)
+      })
+      yield uuid
+  }
+}
+
+// Create instance of generator
+const TimerId = uuidGenerator()
 
 
 // Initialize Firebase
@@ -62,26 +78,54 @@ export default class App extends Component {
   // Updating the record of when the user logs in
   componentWillMount(){
     const ref = database.ref('/timer/');
-    // Attach an asynchronous callback to read the data at our posts reference
-      ref.on("value", (snapshot) => {
-
-        let data = snapshot.val();
-        if (data === null) {
-          return;
-        }
-        // convert the object into an array of values
-        let timers = Object.keys(data).map(key => {
-            data[key].key = key;
-            return data[key];
-        });
+    
+    //check async storage and if there are records there add them to the list
+    // key will be timers value will be an array of timers with a list of id
+    // create an array to store the timers
+    let localTimers = []
+    // create a new timer
+    let newTimer = {
+      Id: TimerId.next().value,
+      limit: 60,
+      name: "newTimer"
+    }
+    
+    // push the timer to the file
+    localTimers.push(newTimer); 
+    // AsyncStorage.setItem("timers", JSON.stringify(localTimers)).then((r) => {
+    //   console.log("timers stored");
+    // }).done();
+    // get the timers from async storage
+    AsyncStorage.getItem("timers").then((value) => {
+        
         this.setState({
-          storedTimers: timers,
+          storedTimers: JSON.parse(value),
           isLoading: false
         });
+        
+    }).done();
+
+    // Attach an asynchronous callback to read the data at our posts reference
+      // ref.on("value", (snapshot) => {
+
+      //   let data = snapshot.val();
+      //   if (data === null) {
+      //     return;
+      //   }
+      //   // convert the object into an array of values
+      //   let timers = Object.keys(data).map(key => {
+      //       data[key].key = key;
+      //       return data[key];
+      //   });
+
+      //   this.setState({
+      //     storedTimers: timers,
+      //     isLoading: false
+      //   });
           
-        }, function (errorObject) {
-          console.log("The read failed: " + errorObject.code);
-        });
+      //   }, function (errorObject) {
+      //     console.log("The read failed: " + errorObject.code);
+      //   });
   }
   
   

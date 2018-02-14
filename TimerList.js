@@ -194,6 +194,9 @@ class TimerItem extends React.Component {
         - name set by App.js
         - limit set by App.js
 */
+//TODO: bring the sound up one level to initialize it then enable a start and 
+//      stop method for the component - right now it just plays just once
+
 class Timer extends React.Component {
     constructor(props) {
         super(props);
