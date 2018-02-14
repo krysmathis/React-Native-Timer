@@ -55,6 +55,8 @@ class TimerList extends React.Component {
     */
     removeTimer = (timerId) => {
 
+        console.log("removing timer: ", timerId);
+        
         // immutable arrays - create a new one
         const timerList = this.state.runningTimers.slice();
         // get the index # of the specific timer
@@ -135,9 +137,15 @@ class TimerItem extends React.Component {
             this.setState({runTimer: false});
             this.props.remove(this.props.id);
         } else {
+
             this.setState({runTimer:true});
             console.log(this.props);
             this.props.add(this.props.id);
+            
+            // set an interval to remove the timer from the list when it is done
+            setTimeout(() => {
+                this.props.remove(this.props.id);
+            }, this.props.limit * 1000);
         }
     }
 
@@ -163,7 +171,7 @@ class TimerItem extends React.Component {
             <View>
             <View className="timerItem" style={styles.rowText}>
                 <View>
-                    <Text style={styles.titleText} onPress={this.toggleRun} title="Timer">{this.props.name} - {this.props.limit}s </Text>
+                    <Text style={styles.titleText} onPress={this.toggleRun} remove={this.props.remove} title="Timer">{this.props.name} - {this.props.limit}s </Text>
                 </View>
                 <View style={styles.actionItems}>
                     <TouchableOpacity className="updateListing" onPress={this.makeUpdate} style={styles.updateBtn}>
@@ -181,7 +189,7 @@ class TimerItem extends React.Component {
                 </View>
             </View>
             <View>
-                {this.state.runTimer ? <Timer name={this.props.name} limit={this.props.limit}/> : null}
+                {this.state.runTimer ? <Timer remove={this.props.remove} id={this.props.id} name={this.props.name} limit={this.props.limit}/> : null}
             </View>
             </View>
         );
@@ -219,7 +227,6 @@ class Timer extends React.Component {
             });
         }, 1000);
 
-
     }
 
     // When the component is removed from the DOM, clear the setInterval
@@ -245,8 +252,6 @@ class Timer extends React.Component {
                 return;
             }
             
-            // loaded successfully
-            console.log('duration in seconds: ' + whoosh.getDuration() + 'number of channels: ' + whoosh.getNumberOfChannels());
             // Play the sound with an onEnd callback
             whoosh.play((success) => {
         
@@ -278,9 +283,10 @@ class Timer extends React.Component {
 
     timesUp() {
         this.playSound();
+        
         Alert.alert(
-            'Finshed',
-            'Timer is Done',
+            this.props.name,
+            'Timer is Done!',
             [
               {text: 'OK', onPress: () => console.log('Ask me later pressed')},
             ],
@@ -299,8 +305,8 @@ class Timer extends React.Component {
         if (this.isExpired() === true) {
             clearInterval(this.timerId);
             Vibration.vibrate();
-            this.timesUp();
-            return (<Text>Timer Expired</Text>);
+            this.timesUp(<Text>Timer Complete</Text>);
+            return;
         } else {
             return <View style={styles.activity}>
                     <Text>Time remaining: {this.props.limit - this.state.time}</Text>
@@ -333,8 +339,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         height: 50,
-        paddingLeft: 10
+        paddingLeft: 20,
       },
+      // this is the row with the timer
       actionItems: {
         display: 'flex',
         flexDirection: 'row',
@@ -353,7 +360,7 @@ const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#BADA55'
+        backgroundColor: '#BADA55',
     },
     activity: {
         display: 'flex',
