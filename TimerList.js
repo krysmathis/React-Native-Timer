@@ -305,8 +305,8 @@ class Timer extends React.Component {
         if (this.isExpired() === true) {
             clearInterval(this.timerId);
             Vibration.vibrate();
-            this.timesUp(<Text>Timer Complete</Text>);
-            return;
+            this.timesUp();
+            return(<Text>Timer Complete</Text>);
         } else {
             return <View style={styles.activity}>
                     <Text>Time remaining: {this.props.limit - this.state.time}</Text>
