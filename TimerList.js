@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         height: 50,
-        paddingLeft: 20,
+        paddingLeft: 20
       },
       // this is the row with the timer
       actionItems: {

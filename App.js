@@ -85,7 +85,7 @@ export default class App extends Component {
     // create an array to store the timers
     let localTimers = []
     // create a new timer
-
+    
     // get the timers from async storage
     AsyncStorage.getItem("timers").then((value) => {
         
@@ -106,8 +106,13 @@ export default class App extends Component {
 
     AsyncStorage.getItem("timers").then((value) => {
       
-      // parse the value into a javascript array - sli
-      timerArray = JSON.parse(value); 
+      // handle the situation where there are no existing timers
+      if (value === null) {
+        timerArray = [];
+      } else {        
+        // parse the value into a javascript array - sli
+        timerArray = JSON.parse(value); 
+      }
 
         // new timer
         const newTimer = {
