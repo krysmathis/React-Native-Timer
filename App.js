@@ -17,8 +17,6 @@ import {
   AsyncStorage
 } from 'react-native';
 import TimerList from './TimerList.js';
-import * as firebase from "firebase";
-
 
 // uuid Generatory
 const uuidGenerator = function* () {
@@ -34,20 +32,6 @@ const uuidGenerator = function* () {
 
 // Create instance of generator
 const TimerId = uuidGenerator()
-
-
-// Initialize Firebase
-var config = {
-  apiKey: "AIzaSyC8XhJs3X_-vpoOmvS6HShJPZdwjaE_39k",
-  authDomain: "react-timer-c4024.firebaseapp.com",
-  databaseURL: "https://react-timer-c4024.firebaseio.com",
-  projectId: "react-timer-c4024",
-  storageBucket: "",
-  messagingSenderId: "990870043209"
-};
-
-firebase.initializeApp(config);
-const database = firebase.database();
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' +
@@ -75,26 +59,33 @@ export default class App extends Component {
     this.handleTimeChange = this.handleTimeChange.bind(this);
   }
 
+
+  /*
+    For debugging use the following to create a new timer
+    let localTimers = []
+
+    let newTimer = {
+      key: TimerId.next().value,
+      limit: "60",
+      name: "newTimer"
+    }
+    
+    // push the timer to the file
+    localTimers.push(newTimer); 
+    AsyncStorage.setItem("timers", JSON.stringify(localTimers)).then((r) => {
+      console.log("timers stored");
+    }).done();
+  */
+
   // Updating the record of when the user logs in
   componentWillMount(){
-    const ref = database.ref('/timer/');
     
     //check async storage and if there are records there add them to the list
     // key will be timers value will be an array of timers with a list of id
     // create an array to store the timers
     let localTimers = []
     // create a new timer
-    let newTimer = {
-      Id: TimerId.next().value,
-      limit: 60,
-      name: "newTimer"
-    }
-    
-    // push the timer to the file
-    localTimers.push(newTimer); 
-    // AsyncStorage.setItem("timers", JSON.stringify(localTimers)).then((r) => {
-    //   console.log("timers stored");
-    // }).done();
+
     // get the timers from async storage
     AsyncStorage.getItem("timers").then((value) => {
         
@@ -102,63 +93,102 @@ export default class App extends Component {
           storedTimers: JSON.parse(value),
           isLoading: false
         });
-        
+        console.log(JSON.parse(value));
+
     }).done();
 
-    // Attach an asynchronous callback to read the data at our posts reference
-      // ref.on("value", (snapshot) => {
-
-      //   let data = snapshot.val();
-      //   if (data === null) {
-      //     return;
-      //   }
-      //   // convert the object into an array of values
-      //   let timers = Object.keys(data).map(key => {
-      //       data[key].key = key;
-      //       return data[key];
-      //   });
-
-      //   this.setState({
-      //     storedTimers: timers,
-      //     isLoading: false
-      //   });
-          
-      //   }, function (errorObject) {
-      //     console.log("The read failed: " + errorObject.code);
-      //   });
   }
-  
   
   // Send data up to the database
   handlePost(name, time) {
-    const ref = database.ref('/timer/');
-    ref.push({
-      "name": name,
-      "limit": time
-    })
+    
+    let timerArray = [];
+
+    AsyncStorage.getItem("timers").then((value) => {
+      
+      // parse the value into a javascript array - sli
+      timerArray = JSON.parse(value); 
+
+        // new timer
+        const newTimer = {
+          key: TimerId.next().value,
+          name: name,
+          limit: time
+        }
+        // push to array
+        timerArray.push(newTimer);
+
+        // store it again
+        AsyncStorage.setItem("timers", JSON.stringify(timerArray)).then((r) => {
+          
+          this.setState({
+            storedTimers: timerArray,
+            updateMode: false
+          });
+    
+          console.log("timer added - is it displayed?");
+        }).done();
+        
+      }).done();
   }
 
   handlePut = () => {
 
-    let postData = {
-      name: this.state.title,
-      limit: this.state.time
-    }
-    
-    let updates = {};
-    updates['/timer/' + this.state.id] = postData;
+    const name = this.state.title;
+    const limit = this.state.time;
 
-    firebase.database().ref().update(updates);
+    AsyncStorage.getItem("timers").then((value) => {
+      
+      // parse the value
+      timerArray = JSON.parse(value);
+
+      // pull the old timer and update it
+      const index = timerArray.findIndex(i => i.key === this.state.id);
+      
+      timerArray[index].name = name;
+      timerArray[index].limit = limit;
+
+        // store it again
+        AsyncStorage.setItem("timers", JSON.stringify(timerArray)).then((r) => {
+          
+          this.setState({
+            storedTimers: timerArray,
+            updateMode: false
+          });
     
-    this.setState({
-       updateMode: false
-    });
+        }).done();
+        
+      }).done();
+
   
   }
-    // Send data up to the database
-  handleDelete(id) {
-    const ref = database.ref('/timer/' + id);
-    ref.remove();
+ 
+  // remove the 
+  handleDelete = (id) => {
+    
+    // pull the timers from async storage
+    AsyncStorage.getItem("timers").then((value) => {
+      
+      // parse the array value
+      timerArray = JSON.parse(value);
+
+      // pull the old timer and update it
+      const index = timerArray.findIndex(i => i.key === id);
+      
+      timerArray.splice(index,1);
+
+        // store it again
+        AsyncStorage.setItem("timers", JSON.stringify(timerArray)).then((r) => {
+          
+          this.setState({
+            storedTimers: timerArray,
+            updateMode: false
+          });
+    
+        }).done();
+        
+      }).done();
+
   }
 
   handleUpdate = (timerObj) => {
@@ -171,7 +201,6 @@ export default class App extends Component {
     });
 
   }
-  // for the renderer to render a timer for each of the storedTimers
   
   // tied to the name input
   handleNameChange = (text) => {
@@ -196,7 +225,6 @@ export default class App extends Component {
       } else {
          this.handlePost(this.state.title, this.state.time);
       }
-    
       
       this.setState({
         title: "",
@@ -210,9 +238,7 @@ export default class App extends Component {
     return <TimerList timers={this.state.storedTimers} delete={this.handleDelete} update={this.handleUpdate}/>
   }
   
-  displayForm() {
-    
-    
+  displayForm() {  
     /*
     iOS uses TextInput fields to hold data input
     */
