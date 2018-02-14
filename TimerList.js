@@ -15,15 +15,65 @@ import {
     Image,
     TouchableOpacity
   } from 'react-native';
-
+  import KeepAwake from 'react-native-keep-awake';
 /*
     The TimerList component generates the TimerListItems
 */
 class TimerList extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            runningTimers: []
+        }
     }
     
+    /*
+        If there are active timers, then keep the app awake
+        Params: the unique id of the timer
+        Source: the toggle function in the TimerItem component
+    */
+    addTimer = (timerId) => {
+
+        const prevState = Object.assign({}, this.state);
+        prevState.runningTimers.push(timerId)
+        this.setState({
+            // add a timer to the list of timers
+            runningTimers: prevState.runningTimers
+        });
+        
+        // if the user addes a timer, keep the app awake
+        KeepAwake.activate();
+        console.log("Activating keep awake timer");
+
+    }
+
+    /*
+        When there are no longer any running timers deactivate
+        the KeepAwake function
+        Params: the unique id of the timer
+        Source: the toggle function in the TimerItem component
+    */
+    removeTimer = (timerId) => {
+
+        // immutable arrays - create a new one
+        const timerList = this.state.runningTimers.slice();
+        // get the index # of the specific timer
+        const getIndex = timerList.indexOf(timerId);
+        console.log("getIndex ", getIndex);
+        // remove the item from the array
+        timerList.splice(getIndex,1);
+        // reset the state
+        this.setState({
+            runningTimers: timerList.slice()
+        });
+        
+        // deactivate the KeepAwake function
+        if (timerList.length === 0) {
+            KeepAwake.deactivate();
+            console.log("Deactivating keep awake function");
+        }
+    }
+
     FlatListItemSeparator = () => {
         return (
           <View
@@ -47,7 +97,7 @@ class TimerList extends React.Component {
                 <FlatList
                     data = {this.props.timers}
                     ItemSeparatorComponent = {this.FlatListItemSeparator}
-                    renderItem={({item}) =><TimerItem  name={item.name} limit={item.limit} id={item.key} delete={this.props.delete} update={this.props.update} key={item.id}/> }
+                    renderItem={({item}) =><TimerItem  name={item.name} limit={item.limit} id={item.key} delete={this.props.delete} update={this.props.update} add={this.addTimer} remove={this.removeTimer} key={item.id}/> }
                 />
                 </View>
             );
@@ -77,13 +127,18 @@ class TimerItem extends React.Component {
     }
     
     // Allow the user to toggle the timer on an off
+    // This adds or removes a timer from the list of 
+    // running timers
+
     toggleRun = () => {
         if (this.state.runTimer) {
             this.setState({runTimer: false});
+            this.props.remove(this.props.id);
         } else {
             this.setState({runTimer:true});
+            console.log(this.props);
+            this.props.add(this.props.id);
         }
-
     }
 
     handleDelete = () => {
@@ -153,20 +208,22 @@ class Timer extends React.Component {
         and set a new value for time using the previous time value
     */
     componentWillMount() {
-        
+            
         this.timerId = setInterval(() => {
             const prevState = Object.assign({}, this.state);
             this.setState({
                 time: prevState.time += 1,
             });
         }, 1000);
-        console.log(this.props);
+
+
     }
 
     // When the component is removed from the DOM, clear the setInterval
     componentWillUnmount() {
         clearInterval(this.timerId);
     }
+    
 
     playSound() {
         // Import the react-native-sound module
@@ -246,6 +303,9 @@ class Timer extends React.Component {
             { cancelable: false }
           )
     }
+
+    
+
     // This function ensures the component knows when it has exceede the time limit
     isExpired = () => this.state.time >= this.props.limit ? true : false;
 
